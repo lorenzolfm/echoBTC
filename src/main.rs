@@ -1,26 +1,61 @@
 use dotenv::dotenv;
-use reqwest::header::AUTHORIZATION;
+use reqwest::{blocking::Client, header::AUTHORIZATION};
+use serde::{Deserialize, Serialize};
 
-const URL: &str = "https://api.twitter.com/2/tweets/search/recent?query=%40echoBTC";
+const BASE_URL: &str = "https://api.twitter.com/2";
+const GET_RECENT_TWEETS: &str = "/tweets/search/recent";
 
-fn get_bearer_token() -> String {
-    dotenv().ok();
+#[derive(Debug, Deserialize, Serialize)]
+struct Response {
+    data: Vec<Tweet>,
+}
 
+#[derive(Debug, Deserialize, Serialize)]
+struct Tweet {
+    id: String,
+    text: String,
+    author_id: String,
+}
+
+fn get_bearer_token_auth_header() -> String {
     let bearer_token = std::env::var("BEARER_TOKEN")
-        .expect("BEARER_TOKEN environment variable must be set.");
+        .expect("BEARER_TOKEN environment variable must be set");
 
     format!("Bearer {}", bearer_token)
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = reqwest::blocking::Client::new();
+fn get_url(endpoint: &str) -> String {
+    let mut url = BASE_URL.to_string();
+    url.push_str(endpoint);
 
-    let res = client
-        .get(URL)
-        .header(AUTHORIZATION, get_bearer_token())
-        .send()?;
+    url
+}
 
-    println!("{:#?}", res.text()?);
+fn get_tweets(client: &Client) -> Vec<Tweet> {
+    let url = get_url(GET_RECENT_TWEETS);
+    let authorization_header = get_bearer_token_auth_header();
+    let query = [
+        ("query", "@echoBTC"),
+        ("expansions", "author_id")
+    ];
+
+    client
+        .get(url)
+        .header(AUTHORIZATION, authorization_header)
+        .query(&query)
+        .send()
+        .unwrap()
+        .json::<Response>()
+        .unwrap()
+        .data
+}
+
+fn main() -> Result<(), reqwest::Error> {
+    dotenv().ok();
+
+    let client = Client::new();
+
+    println!("{:#?}", get_tweets(&client));
 
     Ok(())
 }
