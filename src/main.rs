@@ -85,12 +85,13 @@ fn main() -> Result<(), reqwest::Error> {
     dotenv().ok();
 
     let client = Client::new();
-    let tweets = get_tweets(&client);
 
-    for i in 0..tweets.len() {
-        post_retweet(&client, &tweets[i]);
-        thread::sleep(time::Duration::from_secs(5));
+    loop {
+        let tweets = get_tweets(&client);
+
+        for i in 0..tweets.len() {
+            post_retweet(&client, &tweets[i]);
+            thread::sleep(time::Duration::from_secs(5));
+        }
     }
-
-    Ok(())
 }
