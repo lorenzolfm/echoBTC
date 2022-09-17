@@ -1,3 +1,4 @@
+use echo_btc::database::{connect, already_sent};
 use dotenv::dotenv;
 use reqwest::{blocking::Client, header::AUTHORIZATION};
 use serde::{Deserialize, Serialize};
@@ -40,6 +41,9 @@ fn get_tweets(client: &Client) -> Vec<Tweet> {
         .json::<Response>()
         .unwrap()
         .data
+        .into_iter()
+        .filter(|tweet| { tweet.author_id != "2597897487" })
+        .collect()
 }
 
 fn get_bearer_token_auth_header() -> String {
@@ -49,11 +53,11 @@ fn get_bearer_token_auth_header() -> String {
     format!("Bearer {}", bearer_token)
 }
 
-fn post_retweet(client: &Client, tweet: &Tweet) {
+fn post_retweet(client: &Client, tweet_id: &str, database: &sqlite::Connection) {
     let url = get_url(POST_RETWEET);
     let authorization_header = get_oauth1_header(&url);
     let body = HashMap::from([
-        ("tweet_id", &tweet.id)
+        ("tweet_id", tweet_id)
     ]);
 
     let res = client
@@ -63,7 +67,15 @@ fn post_retweet(client: &Client, tweet: &Tweet) {
         .send()
         .unwrap();
 
-    println!("{:#?}", res.text());
+    println!("Retweeted {}", tweet_id);
+
+    if res.status() == 200 {
+        let statement = format!("INSERT INTO tweet_ids VALUES ('{}');", tweet_id);
+        match database.execute(&statement) {
+            Ok(_) => {},
+            Err(error) => println!("{}", error),
+        }
+    }
 }
 
 fn get_oauth1_header(url: &String) -> String {
@@ -84,14 +96,20 @@ fn get_oauth1_header(url: &String) -> String {
 fn main() -> Result<(), reqwest::Error> {
     dotenv().ok();
 
+    let db = connect();
     let client = Client::new();
 
     loop {
         let tweets = get_tweets(&client);
-
         for i in 0..tweets.len() {
-            post_retweet(&client, &tweets[i]);
-            thread::sleep(time::Duration::from_secs(5));
+            let tweet_id = &tweets[i].id;
+
+            if !already_sent(&db, tweet_id) {
+                post_retweet(&client, &tweet_id, &db);
+                thread::sleep(time::Duration::from_secs(5));
+            }
         }
+
+        thread::sleep(time::Duration::from_secs(5));
     }
 }
