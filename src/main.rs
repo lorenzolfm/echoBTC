@@ -40,6 +40,9 @@ fn get_tweets(client: &Client) -> Vec<Tweet> {
         .json::<Response>()
         .unwrap()
         .data
+        .into_iter()
+        .filter(|tweet| { tweet.author_id != "2597897487" })
+        .collect()
 }
 
 fn get_bearer_token_auth_header() -> String {
