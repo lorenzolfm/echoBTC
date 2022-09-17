@@ -15,6 +15,15 @@ pub fn connect() -> sqlite::Connection {
     }
 }
 
+pub fn insert_id(connection: &sqlite::Connection, id: &str) -> () {
+    let statement = format!("INSERT INTO tweet_ids VALUES ('{}');", id);
+
+    match connection.execute(&statement) {
+        Ok(_) => {},
+        Err(error) => println!("{}", error),
+        }
+}
+
 pub fn already_sent(connection: &sqlite::Connection, id: &str) -> bool {
     let mut already_sent: bool = false;
     let query = format!("SELECT * FROM tweet_ids WHERE tweet_id='{}';", id);
