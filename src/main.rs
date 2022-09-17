@@ -1,7 +1,7 @@
 use dotenv::dotenv;
 use reqwest::{blocking::Client, header::AUTHORIZATION};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, time, thread};
 
 const BASE_URL: &str = "https://api.twitter.com/2";
 const GET_RECENT_TWEETS: &str = "/tweets/search/recent";
@@ -89,7 +89,7 @@ fn main() -> Result<(), reqwest::Error> {
 
     for i in 0..tweets.len() {
         post_retweet(&client, &tweets[i]);
-        std::thread::sleep(std::time::Duration::from_secs(5));
+        thread::sleep(time::Duration::from_secs(5));
     }
 
     Ok(())
