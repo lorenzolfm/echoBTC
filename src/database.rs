@@ -29,3 +29,12 @@ pub fn already_sent(connection: &sqlite::Connection, id: &str) -> bool {
 
     already_sent
 }
+
+pub fn insert_id(connection: &sqlite::Connection, id: &str) -> () {
+    let statement = format!("INSERT INTO tweet_ids VALUES ('{}');", id);
+
+    match connection.execute(&statement) {
+        Ok(_) => {},
+        Err(error) => println!("{}", error),
+        }
+}

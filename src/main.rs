@@ -1,4 +1,4 @@
-use echo_btc::database::{connect, already_sent};
+use echo_btc::database::{connect, already_sent, insert_id};
 use dotenv::dotenv;
 use reqwest::{blocking::Client, header::AUTHORIZATION};
 use serde::{Deserialize, Serialize};
@@ -70,11 +70,7 @@ fn post_retweet(client: &Client, tweet_id: &str, database: &sqlite::Connection) 
     println!("Retweeted {}", tweet_id);
 
     if res.status() == 200 {
-        let statement = format!("INSERT INTO tweet_ids VALUES ('{}');", tweet_id);
-        match database.execute(&statement) {
-            Ok(_) => {},
-            Err(error) => println!("{}", error),
-        }
+        insert_id(&database, &tweet_id);
     }
 }
 
