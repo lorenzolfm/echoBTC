@@ -1,5 +1,5 @@
-pub fn connect() -> sqlite::Connection {
-    let connection = sqlite::open(".sqlite").unwrap();
+pub fn connect(db_name: &str) -> sqlite::Connection {
+    let connection = sqlite::open(db_name).unwrap();
 
     let db = connection.execute("CREATE TABLE tweet_ids (tweet_id TEXT);");
 
@@ -19,9 +19,9 @@ pub fn insert_id(connection: &sqlite::Connection, id: &str) -> () {
     let statement = format!("INSERT INTO tweet_ids VALUES ('{}');", id);
 
     match connection.execute(&statement) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(error) => println!("{}", error),
-        }
+    }
 }
 
 pub fn already_sent(connection: &sqlite::Connection, id: &str) -> bool {
