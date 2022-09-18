@@ -51,4 +51,14 @@ impl Env {
     pub fn get_token_secret(&self) -> &String {
         &self.token_secret
     }
+
+    pub fn create_test_env() -> Self {
+        Env {
+            bearer_token: "1".to_string(),
+            consumer_key: "2".to_string(),
+            consumer_secret: "3".to_string(),
+            access_token: "4".to_string(),
+            token_secret: "5".to_string(),
+        }
+    }
 }
