@@ -102,4 +102,31 @@ mod tests {
             )
         }
     }
+
+    mod get_oauth1_header {
+        use super::get_test_env;
+        use crate::api::get_oauth1_header;
+
+        #[test]
+        fn should_return_expected_header() {
+            let env = get_test_env();
+            let url = "test_url".to_string();
+
+            let header = get_oauth1_header(&url, &env);
+            println!("{}", header);
+
+            assert_eq!(
+                &header[0..29],
+                "OAuth oauth_consumer_key=\"2\","
+            );
+            assert_eq!(
+                &header[56..91],
+                "oauth_signature_method=\"HMAC-SHA1\","
+            );
+            assert_eq!(
+                &header[120..136],
+                "oauth_token=\"4\",",
+            );
+        }
+    }
 }
