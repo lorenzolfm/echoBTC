@@ -1,7 +1,8 @@
-use std::collections::HashMap;
 use crate::database::insert_id;
-use serde::{Deserialize, Serialize};
+use crate::env::Env;
 use reqwest::{blocking::Client, header::AUTHORIZATION};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 const BASE_URL: &str = "https://api.twitter.com/2";
 const GET_RECENT_TWEETS: &str = "/tweets/search/recent";
@@ -26,9 +27,25 @@ fn get_url(endpoint: &str) -> String {
     url
 }
 
-pub fn get_tweets(client: &Client) -> Vec<Tweet> {
+fn get_bearer_token_header(bearer_token: String) -> String {
+    format!("Bearer {}", bearer_token)
+}
+
+fn get_oauth1_header(url: &String, env: &Env) -> String {
+    let consumer_token = env.get_consumer_key();
+    let consumer_secret = env.get_consumer_secret();
+    let access_token = env.get_access_token();
+    let token_secret = env.get_token_secret();
+
+    let token =
+        oauth::Token::from_parts(consumer_token, consumer_secret, access_token, token_secret);
+
+    oauth::post(url, &(), &token, oauth::HMAC_SHA1)
+}
+
+pub fn get_tweets(client: &Client, bearer_token: &String) -> Vec<Tweet> {
     let url = get_url(GET_RECENT_TWEETS);
-    let authorization_header = get_bearer_token_auth_header();
+    let authorization_header = get_bearer_token_header(bearer_token.to_string());
     let query = [("query", "@echoBTC"), ("expansions", "author_id")];
 
     client
@@ -41,23 +58,14 @@ pub fn get_tweets(client: &Client) -> Vec<Tweet> {
         .unwrap()
         .data
         .into_iter()
-        .filter(|tweet| { tweet.author_id != "2597897487" })
+        .filter(|tweet| tweet.author_id != "2597897487")
         .collect()
 }
 
-fn get_bearer_token_auth_header() -> String {
-    let bearer_token =
-        std::env::var("BEARER_TOKEN").expect("BEARER_TOKEN environment variable must be set");
-
-    format!("Bearer {}", bearer_token)
-}
-
-pub fn post_retweet(client: &Client, tweet_id: &str, database: &sqlite::Connection) {
+pub fn post_retweet(client: &Client, tweet_id: &str, database: &sqlite::Connection, env: &Env) {
     let url = get_url(POST_RETWEET);
-    let authorization_header = get_oauth1_header(&url);
-    let body = HashMap::from([
-        ("tweet_id", tweet_id)
-    ]);
+    let authorization_header = get_oauth1_header(&url, &env);
+    let body = HashMap::from([("tweet_id", tweet_id)]);
 
     let res = client
         .post(url)
@@ -73,17 +81,60 @@ pub fn post_retweet(client: &Client, tweet_id: &str, database: &sqlite::Connecti
     }
 }
 
-fn get_oauth1_header(url: &String) -> String {
-    let consumer_key = std::env::var("API_KEY")
-        .expect("API_KEY environment variable must be set.");
-    let consumer_secret = std::env::var("API_SECRET_KEY")
-        .expect("API_SECRET_KEY environment variable must be set.");
-    let access_token = std::env::var("ACCESS_TOKEN")
-        .expect("ACCESS_TOKEN environment variable must be set.");
-    let token_secret = std::env::var("ACCESS_TOKEN_SECRET")
-        .expect("ACCESS_TOKEN_SECRET environment variable must be set.");
+#[cfg(test)]
+mod tests {
+    use crate::env::Env;
 
-    let token = oauth::Token::from_parts(consumer_key, consumer_secret, access_token, token_secret);
+    fn get_test_env() -> Env {
+        Env::create_test_env()
+    }
 
-    oauth::post(url, &(), &token, oauth::HMAC_SHA1)
+    mod get_url {
+        use crate::api::get_url;
+
+        #[test]
+        fn should_concat_endpoint_to_base_url() {
+            assert_eq!(get_url("1"), "https://api.twitter.com/21")
+        }
+    }
+
+    mod get_bearer_token_header {
+        use super::get_test_env;
+        use crate::api::get_bearer_token_header;
+
+        #[test]
+        fn should_return_expect_header() {
+            let env = get_test_env();
+
+            assert_eq!(
+                get_bearer_token_header(env.get_bearer_token().to_string()),
+                "Bearer 1".to_string()
+            )
+        }
+    }
+
+    mod get_oauth1_header {
+        use super::get_test_env;
+        use crate::api::get_oauth1_header;
+
+        #[test]
+        fn should_return_expected_header() {
+            let env = get_test_env();
+            let url = "test_url".to_string();
+            let header = get_oauth1_header(&url, &env);
+
+            assert_eq!(
+                &header[0..29],
+                "OAuth oauth_consumer_key=\"2\","
+            );
+            assert_eq!(
+                &header[56..91],
+                "oauth_signature_method=\"HMAC-SHA1\","
+            );
+            assert_eq!(
+                &header[120..136],
+                "oauth_token=\"4\",",
+            );
+        }
+    }
 }
