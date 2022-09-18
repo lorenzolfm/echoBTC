@@ -38,3 +38,40 @@ pub fn already_sent(connection: &sqlite::Connection, id: &str) -> bool {
 
     already_sent
 }
+
+
+#[cfg(test)]
+mod test {
+    fn reset_db(connection: &sqlite::Connection) {
+        connection.execute("DELETE FROM tweet_ids;")
+            .unwrap();
+    }
+
+    mod insert_id {
+        use super::reset_db;
+        use crate::database::{connect, insert_id};
+
+        #[test]
+        fn should_insert_id_to_db() {
+            let conn = connect(".test.sqlite");
+
+            for i in 0..3 {
+                insert_id(&conn, &i.to_string())
+            }
+
+            let mut expected = 0;
+
+            conn.iterate("SELECT * FROM tweet_ids;", |pairs| {
+                for &(_column, value) in pairs.iter() {
+                    assert_eq!(value.unwrap(), expected.to_string());
+                    expected += 1;
+                }
+
+                true
+            })
+            .unwrap();
+
+            reset_db(&conn);
+        }
+    }
+}
