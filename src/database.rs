@@ -39,23 +39,26 @@ pub fn already_sent(connection: &sqlite::Connection, id: &str) -> bool {
     already_sent
 }
 
-
 #[cfg(test)]
 mod test {
-    fn reset_db(connection: &sqlite::Connection) {
-        connection.execute("DELETE FROM tweet_ids;")
-            .unwrap();
+    use serial_test::serial;
+    use crate::database::connect;
+
+    pub const TEST_DB: &str = ".test.sqlite";
+
+    pub fn reset_db(connection: &sqlite::Connection) {
+        connection.execute("DELETE FROM tweet_ids;").unwrap();
     }
 
     mod insert_id {
-        use super::reset_db;
-        use crate::database::{connect, insert_id};
+        use crate::database::insert_id;
 
         #[test]
+        #[super::serial]
         fn should_insert_id_to_db() {
-            let conn = connect(".test.sqlite");
+            let conn = super::connect(super::TEST_DB);
 
-            for i in 0..3 {
+            for i in 0..5 {
                 insert_id(&conn, &i.to_string())
             }
 
@@ -71,7 +74,44 @@ mod test {
             })
             .unwrap();
 
-            reset_db(&conn);
+            super::reset_db(&conn);
+        }
+    }
+
+    mod already_sent {
+        use crate::database::already_sent;
+
+        #[test]
+        #[super::serial]
+        fn should_return_false_if_id_not_in_db() {
+            let conn = super::connect(super::TEST_DB);
+
+            assert!(!already_sent(&conn, "1"));
+            assert!(!already_sent(&conn, "2"));
+            assert!(!already_sent(&conn, "3"));
+
+            super::reset_db(&conn);
+        }
+
+        #[test]
+        #[super::serial]
+        fn should_return_true_if_id_in_db() {
+            let conn = super::connect(super::TEST_DB);
+
+            conn.execute(
+                "
+                INSERT INTO tweet_ids VALUES ('1');
+                INSERT INTO tweet_ids VALUES ('2');
+                INSERT INTO tweet_ids VALUES ('3');
+                ",
+            )
+            .unwrap();
+
+            assert!(already_sent(&conn, "1"));
+            assert!(already_sent(&conn, "2"));
+            assert!(already_sent(&conn, "3"));
+
+            super::reset_db(&conn);
         }
     }
 }
