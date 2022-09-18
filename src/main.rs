@@ -9,7 +9,7 @@ use std::{thread, time};
 fn main() -> Result<(), reqwest::Error> {
     dotenv().ok();
 
-    let db = connect();
+    let db = connect(".sqlite");
     let client = Client::new();
 
     loop {
