@@ -73,17 +73,33 @@ pub fn post_retweet(client: &Client, tweet_id: &str, database: &sqlite::Connecti
     }
 }
 
-fn get_oauth1_header(url: &String) -> String {
-    let consumer_key = std::env::var("API_KEY")
-        .expect("API_KEY environment variable must be set.");
-    let consumer_secret = std::env::var("API_SECRET_KEY")
-        .expect("API_SECRET_KEY environment variable must be set.");
-    let access_token = std::env::var("ACCESS_TOKEN")
-        .expect("ACCESS_TOKEN environment variable must be set.");
-    let token_secret = std::env::var("ACCESS_TOKEN_SECRET")
-        .expect("ACCESS_TOKEN_SECRET environment variable must be set.");
+#[cfg(test)]
+mod tests {
+    mod get_url {
+        use crate::api::get_url;
 
-    let token = oauth::Token::from_parts(consumer_key, consumer_secret, access_token, token_secret);
+        #[test]
+        fn should_concat_endpoint_to_base_url() {
+            assert_eq!(get_url("1"), "https://api.twitter.com/21")
+        }
+    }
 
-    oauth::post(url, &(), &token, oauth::HMAC_SHA1)
+    mod get_bearer_token_auth_header {
+        use crate::api::get_bearer_token_header;
+        use crate::env::Env;
+
+        fn get_test_env() -> Env {
+            Env::create_test_env()
+        }
+
+        #[test]
+        fn should_return_expect_header() {
+            let env = get_test_env();
+
+            assert_eq!(
+                get_bearer_token_header(env.get_bearer_token().to_string()),
+                "Bearer 1".to_string()
+            )
+        }
+    }
 }
