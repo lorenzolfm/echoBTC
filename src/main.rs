@@ -17,6 +17,7 @@ fn main() -> Result<(), reqwest::Error> {
 
     loop {
         let tweets = get_tweets(&client, &bearer_token);
+
         for i in 0..tweets.len() {
             let tweet_id = &tweets[i].id;
 
