@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 const BASE_URL: &str = "https://api.twitter.com/2";
 const GET_RECENT_TWEETS: &str = "/tweets/search/recent";
-const POST_RETWEET: &str = "/users/2597897487/retweets";
+const POST_RETWEET: &str = "/users/1569069871471681536/retweets";
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Response {
@@ -48,18 +48,28 @@ pub fn get_tweets(client: &Client, bearer_token: &String) -> Vec<Tweet> {
     let authorization_header = get_bearer_token_header(bearer_token.to_string());
     let query = [("query", "@echoBTC"), ("expansions", "author_id")];
 
-    client
+    let result = client
         .get(url)
         .header(AUTHORIZATION, authorization_header)
         .query(&query)
         .send()
         .unwrap()
-        .json::<Response>()
-        .unwrap()
-        .data
-        .into_iter()
-        .filter(|tweet| tweet.author_id != "2597897487")
-        .collect()
+        .json::<Response>();
+
+    match result {
+        Ok(res) => {
+            let tweets: Vec<Tweet> = res
+                .data
+                .into_iter()
+                .filter(|tweet| tweet.author_id != "1569069871471681536")
+                .collect();
+
+            tweets
+        }
+        Err(_) => {
+            Vec::new()
+        }
+    }
 }
 
 pub fn post_retweet(client: &Client, tweet_id: &str, database: &sqlite::Connection, env: &Env) {
@@ -74,9 +84,8 @@ pub fn post_retweet(client: &Client, tweet_id: &str, database: &sqlite::Connecti
         .send()
         .unwrap();
 
-    println!("Retweeted {}", tweet_id);
-
     if res.status() == 200 {
+        println!("Retweeted {}", tweet_id);
         insert_id(&database, &tweet_id);
     }
 }
@@ -123,18 +132,9 @@ mod tests {
             let url = "test_url".to_string();
             let header = get_oauth1_header(&url, &env);
 
-            assert_eq!(
-                &header[0..29],
-                "OAuth oauth_consumer_key=\"2\","
-            );
-            assert_eq!(
-                &header[56..91],
-                "oauth_signature_method=\"HMAC-SHA1\","
-            );
-            assert_eq!(
-                &header[120..136],
-                "oauth_token=\"4\",",
-            );
+            assert_eq!(&header[0..29], "OAuth oauth_consumer_key=\"2\",");
+            assert_eq!(&header[56..91], "oauth_signature_method=\"HMAC-SHA1\",");
+            assert_eq!(&header[120..136], "oauth_token=\"4\",",);
         }
     }
 }
