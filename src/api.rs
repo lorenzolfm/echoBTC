@@ -8,12 +8,12 @@ const BASE_URL: &str = "https://api.twitter.com/2";
 const GET_RECENT_TWEETS: &str = "/tweets/search/recent";
 const POST_RETWEET: &str = "/users/1569069871471681536/retweets";
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct Response {
     data: Vec<Tweet>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Tweet {
     pub id: String,
     text: String,
@@ -58,7 +58,7 @@ pub fn get_tweets(client: &Client, bearer_token: &String) -> Vec<Tweet> {
 
     match result {
         Ok(res) => {
-            println!("Found tweets!");
+            println!("Found tweets!: {:#?}", res);
 
             let tweets: Vec<Tweet> = res
                 .data
