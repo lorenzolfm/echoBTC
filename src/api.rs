@@ -70,7 +70,7 @@ pub fn get_tweets(client: &Client, bearer_token: &String) -> Vec<Tweet> {
         }
         Err(e) => {
             println!("{}", e);
-            panic!("Unable to get tweets")
+            Vec::new()
         }
     }
 }
