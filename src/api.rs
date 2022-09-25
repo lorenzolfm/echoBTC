@@ -52,15 +52,15 @@ pub fn get_tweets(client: &Client, bearer_token: &String) -> Vec<Tweet> {
         .get(url)
         .header(AUTHORIZATION, authorization_header)
         .query(&query)
-        .send()
-        .unwrap()
-        .json::<Response>();
+        .send();
+
+    println!("{:#?}", result);
 
     match result {
         Ok(res) => {
-            println!("Found tweets!: {:#?}", res);
-
             let tweets: Vec<Tweet> = res
+                .json::<Response>()
+                .unwrap()
                 .data
                 .into_iter()
                 .filter(|tweet| tweet.author_id != "1569069871471681536")
