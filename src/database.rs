@@ -20,7 +20,10 @@ pub fn insert_id(connection: &sqlite::Connection, id: &str) -> () {
 
     match connection.execute(&statement) {
         Ok(_) => {}
-        Err(error) => println!("{}", error),
+        Err(error) => {
+            println!("{}", error);
+            panic!("Unable to save id");
+        }
     }
 }
 

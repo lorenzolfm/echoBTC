@@ -58,6 +58,8 @@ pub fn get_tweets(client: &Client, bearer_token: &String) -> Vec<Tweet> {
 
     match result {
         Ok(res) => {
+            println!("Found tweets!");
+
             let tweets: Vec<Tweet> = res
                 .data
                 .into_iter()
@@ -66,8 +68,9 @@ pub fn get_tweets(client: &Client, bearer_token: &String) -> Vec<Tweet> {
 
             tweets
         }
-        Err(_) => {
-            Vec::new()
+        Err(e) => {
+            println!("{}", e);
+            panic!("Unable to get tweets")
         }
     }
 }
