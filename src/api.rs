@@ -8,12 +8,12 @@ const BASE_URL: &str = "https://api.twitter.com/2";
 const GET_RECENT_TWEETS: &str = "/tweets/search/recent";
 const POST_RETWEET: &str = "/users/1569069871471681536/retweets";
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 struct Response {
     data: Vec<Tweet>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Tweet {
     pub id: String,
     text: String,
