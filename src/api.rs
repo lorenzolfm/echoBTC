@@ -54,8 +54,6 @@ pub fn get_tweets(client: &Client, bearer_token: &String) -> Vec<Tweet> {
         .query(&query)
         .send();
 
-    println!("{:#?}", result);
-
     match result {
         Ok(res) => {
             let tweets: Vec<Tweet> = res
