@@ -8,6 +8,12 @@ pub struct Env {
     token_secret: String,
 }
 
+impl Default for Env {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Env {
     pub fn new() -> Self {
         dotenv().ok();

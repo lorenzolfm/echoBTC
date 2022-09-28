@@ -15,7 +15,7 @@ pub fn connect(db_name: &str) -> sqlite::Connection {
     }
 }
 
-pub fn insert_id(connection: &sqlite::Connection, id: &str) -> () {
+pub fn insert_id(connection: &sqlite::Connection, id: &str) {
     let statement = format!("INSERT INTO tweet_ids VALUES ('{}');", id);
 
     match connection.execute(&statement) {
