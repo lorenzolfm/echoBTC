@@ -10,7 +10,7 @@ const POST_RETWEET: &str = "/users/1569069871471681536/retweets";
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Response {
-    data: Vec<Tweet>,
+    data: Option<Vec<Tweet>>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -43,7 +43,7 @@ fn get_oauth1_header(url: &String, env: &Env) -> String {
     oauth::post(url, &(), &token, oauth::HMAC_SHA1)
 }
 
-pub fn get_tweets(client: &Client, bearer_token: &String) -> Vec<Tweet> {
+pub fn get_tweets(client: &Client, bearer_token: &String) -> Option<Vec<Tweet>> {
     let url = get_url(GET_RECENT_TWEETS);
     let authorization_header = get_bearer_token_header(bearer_token.to_string());
     let query = [("query", "@echoBTC"), ("expansions", "author_id")];
@@ -56,19 +56,16 @@ pub fn get_tweets(client: &Client, bearer_token: &String) -> Vec<Tweet> {
 
     match result {
         Ok(res) => {
-            let tweets: Vec<Tweet> = res
-                .json::<Response>()
-                .unwrap()
-                .data
-                .into_iter()
-                .filter(|tweet| tweet.author_id != "1569069871471681536")
-                .collect();
+            let tweets = res.json::<Response>().unwrap();
 
-            tweets
+            tweets.data.map(|tweets| tweets
+                        .into_iter()
+                        .filter(|tweet| tweet.author_id != "1569069871471681536")
+                        .collect())
         }
         Err(e) => {
-            println!("{}", e);
-            Vec::new()
+            println!("{:?}", e);
+            None
         }
     }
 }

@@ -16,16 +16,16 @@ fn main() -> Result<(), reqwest::Error> {
     let client = Client::new();
 
     loop {
-        let tweets = get_tweets(&client, bearer_token);
+        if let Some(tweets) = get_tweets(&client, bearer_token) {
+            (0..tweets.len()).for_each(|i| {
+                let tweet_id = &tweets[i].id;
 
-        (0..tweets.len()).for_each(|i| {
-            let tweet_id = &tweets[i].id;
+                if !already_sent(&db, tweet_id) {
+                    post_retweet(&client, tweet_id, &db, &env)
+                }
+            });
 
-            if !already_sent(&db, tweet_id) {
-                post_retweet(&client, tweet_id, &db, &env);
-            }
-        });
-
-        thread::sleep(time::Duration::from_secs(20));
+            thread::sleep(time::Duration::from_secs(20));
+        }
     }
 }
