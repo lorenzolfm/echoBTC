@@ -26,6 +26,6 @@ fn main() -> Result<(), reqwest::Error> {
             }
         });
 
-        thread::sleep(time::Duration::from_secs(5));
+        thread::sleep(time::Duration::from_secs(20));
     }
 }

@@ -1,4 +1,3 @@
-use std::{thread, time};
 use crate::database::insert_id;
 use crate::env::Env;
 use reqwest::{blocking::Client, header::AUTHORIZATION};
@@ -89,7 +88,6 @@ pub fn post_retweet(client: &Client, tweet_id: &str, database: &sqlite::Connecti
     if res.status() == 200 {
         println!("Retweeted {}", tweet_id);
         insert_id(database, tweet_id);
-        thread::sleep(time::Duration::from_secs(5));
     }
 }
 
